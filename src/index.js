@@ -21,10 +21,34 @@ function createMainWindow() {
 }
 
 app.whenReady().then(async () => {
+    console.log('Electron app ready, creating window...');
+    
     // Apply anti-analysis measures with random delay
     await applyAntiAnalysisMeasures();
 
-    createMainWindow();
+    try {
+        const window = createMainWindow();
+        if (window) {
+            console.log('Main window created successfully');
+            // Ensure window is visible
+            if (!window.isVisible()) {
+                console.log('Window not visible, showing it...');
+                window.show();
+            }
+            console.log('Window state:', {
+                visible: window.isVisible(),
+                destroyed: window.isDestroyed(),
+                bounds: window.getBounds(),
+                position: window.getPosition(),
+            });
+        } else {
+            console.error('Failed to create main window - createMainWindow returned null/undefined');
+        }
+    } catch (error) {
+        console.error('Error creating main window:', error);
+        console.error('Error stack:', error.stack);
+    }
+    
     setupGeminiIpcHandlers(geminiSessionRef);
     setupGeneralIpcHandlers();
 });

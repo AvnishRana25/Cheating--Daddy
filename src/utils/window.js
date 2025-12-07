@@ -37,8 +37,9 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
         transparent: true,
         hasShadow: false,
         alwaysOnTop: true,
-        skipTaskbar: true,
-        hiddenInMissionControl: true,
+        skipTaskbar: false, // Temporarily show in taskbar for debugging
+        hiddenInMissionControl: false, // Temporarily show in Mission Control for debugging
+        show: true, // Show immediately for debugging
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false, // TODO: change to true
@@ -47,7 +48,7 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
             webSecurity: true,
             allowRunningInsecureContent: false,
         },
-        backgroundColor: '#00000000',
+        backgroundColor: '#1a1a1a', // Temporary visible background for debugging
     });
 
     const { session, desktopCapturer } = require('electron');
@@ -75,7 +76,55 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
         mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     }
 
-    mainWindow.loadFile(path.join(__dirname, '../index.html'));
+    // Load the HTML file
+    console.log('Loading index.html from:', path.join(__dirname, '../index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../index.html'))
+        .then(() => {
+            console.log('✅ index.html loaded successfully');
+        })
+        .catch(error => {
+            console.error('❌ Error loading index.html:', error);
+            console.error('Error details:', error.message, error.stack);
+        });
+
+    // Ensure window is shown after it loads
+    mainWindow.once('ready-to-show', () => {
+        console.log('✅ Window ready-to-show event fired');
+        mainWindow.show();
+        mainWindow.focus(); // Force focus
+        console.log('Window shown. State:', {
+            visible: mainWindow.isVisible(),
+            position: mainWindow.getPosition(),
+            size: mainWindow.getSize(),
+            bounds: mainWindow.getBounds(),
+            focused: mainWindow.isFocused(),
+        });
+    });
+
+    // Show immediately and focus
+    mainWindow.show();
+    mainWindow.focus();
+    console.log('Window created and shown immediately. Initial state:', {
+        visible: mainWindow.isVisible(),
+        position: mainWindow.getPosition(),
+        size: mainWindow.getSize(),
+        bounds: mainWindow.getBounds(),
+        focused: mainWindow.isFocused(),
+    });
+    
+    // Also listen for did-finish-load
+    mainWindow.webContents.once('did-finish-load', () => {
+        console.log('✅ Web contents finished loading');
+        mainWindow.show();
+        mainWindow.focus();
+    });
+
+    // Open DevTools automatically for debugging
+    // You can also use Cmd+Option+I (Mac) or Ctrl+Shift+I (Windows/Linux) to toggle manually
+    if (process.env.OPEN_DEVTOOLS === 'true' || process.env.NODE_ENV !== 'production') {
+        mainWindow.webContents.openDevTools();
+        console.log('DevTools opened');
+    }
 
     // Set window title to random name if provided
     if (randomNames && randomNames.windowTitle) {
@@ -83,11 +132,15 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
         console.log(`Set window title to: ${randomNames.windowTitle}`);
     }
 
-    // Apply stealth measures
-    applyStealthMeasures(mainWindow);
+    // Apply stealth measures (temporarily disabled for debugging)
+    // applyStealthMeasures(mainWindow);
 
-    // Start periodic title randomization for additional stealth
-    startTitleRandomization(mainWindow);
+    // Start periodic title randomization for additional stealth (temporarily disabled)
+    // startTitleRandomization(mainWindow);
+    
+    // Set a visible title for debugging
+    mainWindow.setTitle('Cheating Daddy - Debug Mode');
+    console.log('Window title set to: Cheating Daddy - Debug Mode');
 
     // After window is created, check for layout preference and resize if needed
     mainWindow.webContents.once('dom-ready', () => {
@@ -148,6 +201,7 @@ function getDefaultKeybinds() {
         moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
         toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
         toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
+        toggleDevTools: isMac ? 'Cmd+Option+I' : 'Ctrl+Shift+I',
         nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
         previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
         nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
@@ -203,6 +257,23 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             }
         }
     });
+
+    // Register DevTools toggle shortcut (always available)
+    const devToolsKeybind = keybinds.toggleDevTools || (process.platform === 'darwin' ? 'Cmd+Option+I' : 'Ctrl+Shift+I');
+    try {
+        globalShortcut.register(devToolsKeybind, () => {
+            if (!mainWindow.isDestroyed()) {
+                if (mainWindow.webContents.isDevToolsOpened()) {
+                    mainWindow.webContents.closeDevTools();
+                } else {
+                    mainWindow.webContents.openDevTools();
+                }
+            }
+        });
+        console.log(`Registered toggleDevTools: ${devToolsKeybind}`);
+    } catch (error) {
+        console.error(`Failed to register toggleDevTools:`, error);
+    }
 
     // Register toggle visibility shortcut
     if (keybinds.toggleVisibility) {
@@ -351,6 +422,12 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
         }
     });
 
+    ipcMain.on('update-transparency', (event, transparency) => {
+        // Transparency is handled via CSS variables in the renderer
+        // This handler is here for future use if we need to update window-level transparency
+        console.log('Transparency updated:', transparency);
+    });
+
     ipcMain.handle('window-minimize', () => {
         if (!mainWindow.isDestroyed()) {
             mainWindow.minimize();
@@ -467,18 +544,34 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
     ipcMain.handle('update-sizes', async event => {
         try {
             if (mainWindow.isDestroyed()) {
+                console.warn('Cannot update sizes: window destroyed');
                 return { success: false, error: 'Window has been destroyed' };
             }
 
             // Get current view and layout mode from renderer
-            let viewName, layoutMode;
+            let viewName = 'main';
+            let layoutMode = 'normal';
             try {
-                viewName = await event.sender.executeJavaScript('cheddar.getCurrentView()');
-                layoutMode = await event.sender.executeJavaScript('cheddar.getLayoutMode()');
+                // Check if cheddar object exists before calling
+                const hasCheddar = await event.sender.executeJavaScript('typeof window.cheddar !== "undefined"');
+                if (hasCheddar) {
+                    try {
+                        const view = await event.sender.executeJavaScript('window.cheddar.getCurrentView()');
+                        if (view) viewName = view;
+                    } catch (e) {
+                        console.warn('Failed to get current view:', e.message);
+                    }
+                    try {
+                        const layout = await event.sender.executeJavaScript('window.cheddar.getLayoutMode()');
+                        if (layout) layoutMode = layout;
+                    } catch (e) {
+                        console.warn('Failed to get layout mode:', e.message);
+                    }
+                } else {
+                    console.warn('cheddar object not available yet, using defaults');
+                }
             } catch (error) {
-                console.warn('Failed to get view/layout from renderer, using defaults:', error);
-                viewName = 'main';
-                layoutMode = 'normal';
+                console.warn('Failed to get view/layout from renderer, using defaults:', error.message);
             }
 
             console.log('Size update requested for view:', viewName, 'layout:', layoutMode);
@@ -518,11 +611,17 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             }
 
             const [currentWidth, currentHeight] = mainWindow.getSize();
-            console.log('Current window size:', currentWidth, 'x', currentHeight);
+            console.log('Current window size:', currentWidth, 'x', currentHeight, 'Target:', targetWidth, 'x', targetHeight);
 
             // If currently resizing, the animation will start from current position
             if (windowResizing) {
                 console.log('Interrupting current resize animation');
+            }
+
+            // Only resize if size actually changed
+            if (currentWidth === targetWidth && currentHeight === targetHeight) {
+                console.log('Window already at target size, skipping resize');
+                return { success: true, message: 'Already at target size' };
             }
 
             await animateWindowResize(mainWindow, targetWidth, targetHeight, `${viewName} view (${layoutMode})`);
@@ -530,7 +629,9 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             return { success: true };
         } catch (error) {
             console.error('Error updating sizes:', error);
-            return { success: false, error: error.message };
+            console.error('Error stack:', error.stack);
+            // Always return a response, even on error
+            return { success: false, error: error.message || 'Unknown error' };
         }
     });
 }

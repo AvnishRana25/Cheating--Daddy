@@ -5,9 +5,14 @@
     "description": "cheating daddy",
     "main": "src/index.js",
     "scripts": {
+        "build:react": "node esbuild.config.js",
+        "dev": "npm run build:react && electron-forge start",
         "start": "electron-forge start",
+        "prepackage": "npm run build:react",
         "package": "electron-forge package",
+        "premake": "npm run build:react",
         "make": "electron-forge make",
+        "prepublish": "npm run build:react",
         "publish": "electron-forge publish",
         "lint": "echo \"No linting configured\"",
         "test": "vitest run"
@@ -26,7 +31,9 @@
     "license": "GPL-3.0",
     "dependencies": {
         "@google/genai": "^1.2.0",
-        "electron-squirrel-startup": "^1.0.1"
+        "electron-squirrel-startup": "^1.0.1",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1"
     },
     "devDependencies": {
         "@electron-forge/cli": "^7.8.1",
@@ -41,6 +48,7 @@
         "@reforged/maker-appimage": "^5.0.0",
         "vitest": "^1.6.1",
         "jsdom": "^23.2.0",
-        "electron": "^30.0.5"
+        "electron": "^30.0.5",
+        "esbuild": "^0.20.2"
     }
 }

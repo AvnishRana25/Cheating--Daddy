@@ -93,3 +93,31 @@ typings/
 out/
 .specstory
 .specstory/
+
+# Documentation files (markdown) - exclude README.md
+*.md
+!README.md
+
+# Build artifacts
+src/components/bundle.js
+src/components/bundle.js.map
+src/components/bundle.css
+src/components/bundle.css.map
+dist/
+build/
+
+# Unused/old files (can be removed)
+src/assets/old/
+src/utils/windowResize.js
+
+# Development/documentation files
+DEBUG_WINDOW.md
+WINDOW_NOT_APPEARING.md
+HOW_TO_OPEN_CONSOLE.md
+TROUBLESHOOTING.md
+RUNNING.md
+MIGRATION_COMPLETE.md
+UI_REDESIGN_COMPLETE.md
+AGENTS.md
+FILE_STRUCTURE_IMPROVEMENTS.md
+

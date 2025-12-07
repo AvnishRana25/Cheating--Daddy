@@ -161,10 +161,13 @@ async function initializeGemini(profile = 'interview', language = 'en-US') {
     }
 }
 
-// Listen for status updates
+// Listen for status updates from main process
+// NOTE: React app also listens for this event, so we just log it here
+// The React app's listener will handle the actual state update
 ipcRenderer.on('update-status', (event, status) => {
-    console.log('Status update:', status);
-    cheddar.setStatus(status);
+    console.log('Status update from main process:', status);
+    // React app will handle this via its own IPC listener
+    // We don't call cheddar.setStatus here to avoid loops
 });
 
 // Listen for responses - REMOVED: This is handled in CheatingDaddyApp.js to avoid duplicates
@@ -738,29 +741,52 @@ function handleShortcut(shortcutKey) {
 
     if (shortcutKey === 'ctrl+enter' || shortcutKey === 'cmd+enter') {
         if (currentView === 'main') {
-            cheddar.element().handleStart();
+            // React app handles this via IPC
         } else {
             captureManualScreenshot();
         }
     }
 }
 
-// Create reference to the main app element
-const cheatingDaddyApp = document.querySelector('cheating-daddy-app');
+// React app reference - will be set when React mounts
+let reactAppState = {
+    currentView: 'main',
+    layoutMode: 'normal',
+    setStatus: null,
+    setResponse: null,
+};
+
+// Allow React to register its state handlers
+window.registerReactApp = (handlers) => {
+    if (handlers.getCurrentView) reactAppState.getCurrentView = handlers.getCurrentView;
+    if (handlers.getLayoutMode) reactAppState.getLayoutMode = handlers.getLayoutMode;
+    if (handlers.setStatus) reactAppState.setStatus = handlers.setStatus;
+    if (handlers.setResponse) reactAppState.setResponse = handlers.setResponse;
+};
 
 // Consolidated cheddar object - all functions in one place
 const cheddar = {
-    // Element access
-    element: () => cheatingDaddyApp,
-    e: () => cheatingDaddyApp,
+    // App state functions - these will be updated when React mounts
+    getCurrentView: () => reactAppState.currentView,
+    getLayoutMode: () => reactAppState.layoutMode,
 
-    // App state functions - access properties directly from the app element
-    getCurrentView: () => cheatingDaddyApp.currentView,
-    getLayoutMode: () => cheatingDaddyApp.layoutMode,
-
-    // Status and response functions
-    setStatus: text => cheatingDaddyApp.setStatus(text),
-    setResponse: response => cheatingDaddyApp.setResponse(response),
+    // Status and response functions - call React handlers directly
+    setStatus: text => {
+        // Call React handler directly if available
+        if (reactAppState.setStatus) {
+            reactAppState.setStatus(text);
+        } else {
+            console.warn('React setStatus handler not registered yet, status:', text);
+        }
+    },
+    setResponse: response => {
+        // Call React handler directly if available
+        if (reactAppState.setResponse) {
+            reactAppState.setResponse(response);
+        } else {
+            console.warn('React setResponse handler not registered yet');
+        }
+    },
 
     // Core functionality
     initializeGemini,

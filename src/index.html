@@ -1,5 +1,5 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
     <head>
         <meta http-equiv="content-security-policy" content="script-src 'self' 'unsafe-inline'" />
         <title>Screen and Audio Capture</title>
@@ -81,18 +81,14 @@
             }
 
             body {
-                font-family:
-                    'Inter',
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             }
 
             * {
                 box-sizing: border-box;
             }
 
-            cheating-daddy-app {
+            #react-root {
                 display: block;
                 width: 100%;
                 height: 100%;
@@ -103,10 +99,92 @@
         <script src="assets/marked-4.3.0.min.js"></script>
         <script src="assets/highlight-11.9.0.min.js"></script>
         <link rel="stylesheet" href="assets/highlight-vscode-dark.min.css" />
-        <script type="module" src="components/app/CheatingDaddyApp.js"></script>
+        <link rel="stylesheet" href="components/styles/app.css" />
 
-        <cheating-daddy-app id="cheddar"></cheating-daddy-app>
-        <script src="script.js"></script>
+        <div id="react-root"></div>
+
         <script src="utils/renderer.js"></script>
+        <script src="components/bundle.js"></script>
+        <script>
+            // Initialize React app - completely rewritten without any return statements
+            (function () {
+                'use strict';
+                console.log('[Init] Starting initialization...');
+
+                var attempts = 0;
+                var maxAttempts = 50;
+                var initialized = false;
+                var rootElement = document.getElementById('react-root');
+
+                function tryInit() {
+                    if (initialized) {
+                        console.log('[Init] Already initialized');
+                    } else {
+                        attempts = attempts + 1;
+                        console.log('[Init] Attempt', attempts);
+
+                        if (window.CheatingDaddyApp) {
+                            console.log('[Init] CheatingDaddyApp found');
+
+                            if (window.CheatingDaddyApp.initializeReactApp && typeof window.CheatingDaddyApp.initializeReactApp === 'function') {
+                                console.log('[Init] Calling initializeReactApp');
+                                try {
+                                    window.CheatingDaddyApp.initializeReactApp();
+                                    console.log('[Init] React app initialized successfully');
+                                    initialized = true;
+                                } catch (error) {
+                                    console.error('[Init] Error:', error);
+                                    if (rootElement) {
+                                        rootElement.innerHTML =
+                                            '<div style="padding: 20px; color: #ff4444; background: #1a1a1a; font-family: monospace;">Error: ' +
+                                            error.message +
+                                            '</div>';
+                                    }
+                                    initialized = true;
+                                }
+                            } else {
+                                console.warn('[Init] initializeReactApp not found');
+                            }
+                        } else {
+                            console.log('[Init] CheatingDaddyApp not ready');
+                        }
+
+                        if (!initialized) {
+                            if (attempts < maxAttempts) {
+                                setTimeout(tryInit, 100);
+                            } else {
+                                console.error('[Init] Timeout after', maxAttempts, 'attempts');
+                                if (rootElement) {
+                                    rootElement.innerHTML =
+                                        '<div style="padding: 20px; color: #ffaa00; background: #1a1a1a; font-family: monospace;">Initialization timeout. Please check console.</div>';
+                                }
+                                initialized = true;
+                            }
+                        }
+                    }
+                }
+
+                function startInit() {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', function () {
+                            console.log('[Init] DOMContentLoaded');
+                            setTimeout(tryInit, 100);
+                        });
+                    } else {
+                        console.log('[Init] DOM ready');
+                        setTimeout(tryInit, 100);
+                    }
+
+                    window.addEventListener('load', function () {
+                        console.log('[Init] Window loaded');
+                        if (!initialized) {
+                            setTimeout(tryInit, 100);
+                        }
+                    });
+                }
+
+                startInit();
+            })();
+        </script>
     </body>
 </html>
