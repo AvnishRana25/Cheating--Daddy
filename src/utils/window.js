@@ -48,7 +48,7 @@ function createWindow(sendToRenderer, geminiSessionRef, randomNames = null) {
             webSecurity: true,
             allowRunningInsecureContent: false,
         },
-        backgroundColor: '#1a1a1a', // Temporary visible background for debugging
+        backgroundColor: '#00000000', // Fully transparent background
     });
 
     const { session, desktopCapturer } = require('electron');

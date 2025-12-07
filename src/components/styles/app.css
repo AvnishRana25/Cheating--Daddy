@@ -4,7 +4,7 @@
 
 :root {
     /* Modern Color Palette */
-    --bg-primary: #0a0a0a;
+    --bg-primary: transparent;
     --bg-secondary: rgba(15, 15, 20, 0.95);
     --bg-tertiary: rgba(20, 20, 30, 0.8);
     --bg-glass: rgba(255, 255, 255, 0.05);
@@ -102,7 +102,7 @@ body, html {
     font-family: var(--font-family);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: var(--bg-primary);
+    background: transparent;
     color: var(--text-primary);
     overflow: hidden;
     user-select: none;
@@ -115,7 +115,7 @@ body, html {
 .window-container {
     height: 100vh;
     width: 100vw;
-    background: var(--bg-primary);
+    background: transparent;
     overflow: hidden;
     position: relative;
 }
@@ -1524,7 +1524,7 @@ select.form-control {
 }
 
 .feature-icon {
-    font-size: 18px;
+    font-size: var(--text-lg, 16px);
     margin-right: var(--space-md);
     opacity: 0.8;
 }

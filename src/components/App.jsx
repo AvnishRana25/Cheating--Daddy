@@ -53,6 +53,56 @@ export function CheatingDaddyApp() {
         }
     }, [layoutMode]);
 
+    // Initialize font size and transparency from localStorage on app load
+    useEffect(() => {
+        const root = document.documentElement;
+        
+        // Initialize font size
+        const savedFontSize = localStorage.getItem('fontSize');
+        if (savedFontSize !== null) {
+            const fontSizeValue = parseInt(savedFontSize, 10) || 16;
+            root.style.setProperty('--response-font-size', `${fontSizeValue}px`);
+            root.style.setProperty('--text-lg', `${fontSizeValue}px`);
+        } else {
+            // Set default font size
+            root.style.setProperty('--response-font-size', '16px');
+            root.style.setProperty('--text-lg', '16px');
+        }
+        
+        // Initialize background transparency
+        const savedTransparency = localStorage.getItem('backgroundTransparency');
+        if (savedTransparency !== null) {
+            const transparencyValue = parseFloat(savedTransparency) || 0.8;
+            root.style.setProperty('--bg-secondary', `rgba(15, 15, 20, ${transparencyValue})`);
+            root.style.setProperty('--bg-tertiary', `rgba(20, 20, 30, ${transparencyValue})`);
+            root.style.setProperty('--bg-glass', `rgba(255, 255, 255, ${transparencyValue * 0.05})`);
+            root.style.setProperty('--bg-glass-hover', `rgba(255, 255, 255, ${transparencyValue * 0.08})`);
+            root.style.setProperty('--bg-card', `rgba(255, 255, 255, ${transparencyValue * 0.03})`);
+            root.style.setProperty('--bg-card-hover', `rgba(255, 255, 255, ${transparencyValue * 0.06})`);
+            root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparencyValue * 0.3})`);
+            root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparencyValue * 0.5})`);
+            root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparencyValue})`);
+            root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparencyValue})`);
+            root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparencyValue * 0.05})`);
+            root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparencyValue * 0.5})`);
+        } else {
+            // Set default transparency
+            const defaultTransparency = 0.8;
+            root.style.setProperty('--bg-secondary', `rgba(15, 15, 20, ${defaultTransparency})`);
+            root.style.setProperty('--bg-tertiary', `rgba(20, 20, 30, ${defaultTransparency})`);
+            root.style.setProperty('--bg-glass', `rgba(255, 255, 255, ${defaultTransparency * 0.05})`);
+            root.style.setProperty('--bg-glass-hover', `rgba(255, 255, 255, ${defaultTransparency * 0.08})`);
+            root.style.setProperty('--bg-card', `rgba(255, 255, 255, ${defaultTransparency * 0.03})`);
+            root.style.setProperty('--bg-card-hover', `rgba(255, 255, 255, ${defaultTransparency * 0.06})`);
+            root.style.setProperty('--input-background', `rgba(0, 0, 0, ${defaultTransparency * 0.3})`);
+            root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${defaultTransparency * 0.5})`);
+            root.style.setProperty('--header-background', `rgba(0, 0, 0, ${defaultTransparency})`);
+            root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${defaultTransparency})`);
+            root.style.setProperty('--card-background', `rgba(255, 255, 255, ${defaultTransparency * 0.05})`);
+            root.style.setProperty('--button-background', `rgba(0, 0, 0, ${defaultTransparency * 0.5})`);
+        }
+    }, []); // Run only once on mount
+
     // Define handlers first (before they're used in useEffect)
     const handleSetStatus = useCallback((text) => {
         setStatusText(text);
